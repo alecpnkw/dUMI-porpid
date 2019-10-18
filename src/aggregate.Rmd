@@ -1,0 +1,30 @@
+---
+title: "Read tagging by dataset"
+subtitle: "IRF3 vaccine project"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    code_folding: "hide"
+params:
+  rmd: "reports/template-report.Rmd"
+---
+
+```{r, warning = F, message = F}
+require(dplyr)
+require(purrr)
+require(readr)
+require(DT)
+
+#read in and map
+files <- snakemake@input
+tags <- map_df(files, read_csv)
+
+#summarize and display
+summary <- tags %>%
+    group_by(Sample, tags) %>%
+    summarise(n = n(), CCS = sum(fs), median.CCS.depth = median(fs))
+DT::datatable(summary)
+```
+
+## Source
+<a download="report.Rmd" href="`r base64enc::dataURI(file = params$rmd, mime = 'text/rmd', encoding = 'base64')`">R Markdown source file (to produce this document)</a>

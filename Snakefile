@@ -7,16 +7,18 @@ runIDs = [run for (ds,run) in paired]
 
 rule all:
     input:
-        expand("postproc/{runID}/{dataset}/{dataset}_qc_bins.png", zip, dataset = datasets, runID = runIDs)
+        "reports/template-report.html"
 
 rule trim_primers:
     input:
         SFTP.remote("hercules/opt/shared/PacBio_PipelineData/{runID}/Analysis/Demultiplexing/IRF3/{dataset}.fastq")
     output:
-        "trimmed/{runID}/{dataset}.fastq" #add temporary() flag
+        "trimmed/{runID}/{dataset}.fastq", #add temporary() flag
+        temporary("tmp/{runID}{dataset}_filt.fastq")
     params:
         fwd_primer = lambda wc: config["datasets"][wc.dataset]["Reverse_Primer_2ndRd_Sequence"],
-        rev_primer = lambda wc: config["datasets"][wc.dataset]["Forward_Primer_2ndRd_Sequence"]
+        rev_primer = lambda wc: config["datasets"][wc.dataset]["Forward_Primer_2ndRd_Sequence"],
+        target_size = 2400
     script:
         "src/trim-primers.jl"
 
@@ -41,3 +43,11 @@ rule qc_bins:
         report("postproc/{runID}/{dataset}/{dataset}_qc_bins.csv", category = "PORPID QC")
     script:
         "src/qc-bins-snakemake.jl"
+
+rule aggregate_tags:
+    input:
+        expand("tagged/{runID}/{dataset}.fastq/family_tags.csv", zip, dataset = datasets, runID = runIDs)
+    output:
+        "reports/template-report.html"
+    script:
+        "src/aggregate.Rmd"
