@@ -1,15 +1,17 @@
 from snakemake.remote.SFTP import RemoteProvider
 SFTP = RemoteProvider(username="appankow", private_key="/home/appankow/.ssh/id_rsa_themis")
 configfile: "config.yaml"
-runIDs = [config["datasets"][ds]["Run"] for ds in config["datasets"]]
+paired = [(ds, config["datasets"][ds]["Run"]) for ds in config["datasets"]]
+datasets = [ds for (ds,run) in paired]
+runIDs = [run for (ds,run) in paired]
 
 rule all:
     input:
-        expand("consensus/{runID}/{dataset}.fasta", dataset = config["datasets"], runID = runIDs)
+        expand("postproc/{runID}/{dataset}/{dataset}_qc_bins.png", zip, dataset = datasets, runID = runIDs)
 
 rule trim_primers:
     input:
-        SFTP.remote("hercules/opt/shared/PacBio_PipelineData/2019-03_NIH_B670-IRF3_M4363/Analysis/Demultiplexing/IRF3/{dataset}.fastq")
+        SFTP.remote("hercules/opt/shared/PacBio_PipelineData/{runID}/Analysis/Demultiplexing/IRF3/{dataset}.fastq")
     output:
         "trimmed/{runID}/{dataset}.fastq" #add temporary() flag
     params:
@@ -23,8 +25,19 @@ rule porpid:
         "trimmed/{runID}/{dataset}.fastq"
     output:
         "consensus/{runID}/{dataset}.fasta",
-        directory("tagged/{runID}/{dataset}.fastq")
+        "tagged/{runID}/{dataset}.fastq/family_tags.csv",
+        directory("tagged/{runID}/{dataset}.fastq/{dataset}"),
+        directory("tagged/{runID}/{dataset}.fastq/{dataset}_keeping")
     params:
         sUMI_primer = lambda wc: config["datasets"][wc.dataset]["sUMI_Primer_Sequence"]
     script:
         "src/processing.jl"
+
+rule qc_bins:
+    input:
+        "tagged/{runID}/{dataset}.fastq/family_tags.csv"
+    output:
+        report("postproc/{runID}/{dataset}/{dataset}_qc_bins.png", category = "PORPID QC"),
+        report("postproc/{runID}/{dataset}/{dataset}_qc_bins.csv", category = "PORPID QC")
+    script:
+        "src/qc-bins-snakemake.jl"

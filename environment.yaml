@@ -12,3 +12,7 @@ dependencies:
   - ftputil
   - XRootD
   - biopython
+  - networkx
+  - pygraphviz
+  - pygments
+  - imagemagick
