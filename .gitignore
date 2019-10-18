@@ -1,5 +1,6 @@
 .snakemake
 notebooks/
+hercules/
 report.html
 .DS_Store
 .*

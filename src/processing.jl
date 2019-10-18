@@ -4,7 +4,7 @@ include("../../src/functions.jl")
 sUMI_primer = snakemake.params["sUMI_primer"] #fill in here.
 filtered_data_file = snakemake.input[1]
 template_name = split(basename(filtered_data_file),'.')[1]
-outdir = dirname(snakemake.output[2])
+outdir = dirname(dirname(snakemake.output[2]))
 
 println("Extracting UMIs...")
 t1 = time()
