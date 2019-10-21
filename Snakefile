@@ -7,7 +7,8 @@ runIDs = [run for (ds,run) in paired]
 
 rule all:
     input:
-        "reports/template-report.html"
+        "reports/template-report.html",
+        expand("postproc/{runID}/{dataset}/{dataset}_qc_bins.csv", zip, dataset = datasets, runID = runIDs)
 
 rule trim_primers:
     input:

@@ -61,7 +61,7 @@ for (ix,template) in enumerate(templates)
     probs = []
 
     #Filter and copy to "_keeping"
-    tag_df = filterCCSFamilies(most_likely_real_for_each_obs, path, index_to_tag, tag_counts, template_name)
+    tag_df = filterCCSFamilies(most_likely_real_for_each_obs, path, index_to_tag, tag_counts, template_name, template[2])
     push!(tag_dfs, tag_df)
 end
 CSV.write("$(outdir)/$(basename(filtered_data_file))/family_tags.csv", sort!(vcat(tag_dfs...), [:Sample, :tags, :fs], rev = (false, false, true))); #io step

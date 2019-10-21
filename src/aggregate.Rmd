@@ -14,6 +14,7 @@ require(dplyr)
 require(purrr)
 require(readr)
 require(DT)
+require(stringr)
 
 #read in and map
 files <- snakemake@input
@@ -24,6 +25,7 @@ summary <- tags %>%
     group_by(Sample, tags) %>%
     summarise(n = n(), CCS = sum(fs), median.CCS.depth = median(fs))
 DT::datatable(summary)
+write_csv(summary, path = str_replace(snakemake@output[[1]], ".html", ".csv"))
 ```
 
 ## Source

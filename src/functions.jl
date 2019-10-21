@@ -86,7 +86,7 @@ end
 """
 Given results of the LDA, filter likely offspring UMIs and apply qc
 """
-function filterCCSFamilies(most_likely_real_for_each_obs, path, index_to_tag, tag_counts, template_name)
+function filterCCSFamilies(most_likely_real_for_each_obs, path, index_to_tag, tag_counts, template_name, template)
 
     likely_real = []
     UMI = []
@@ -106,12 +106,13 @@ function filterCCSFamilies(most_likely_real_for_each_obs, path, index_to_tag, ta
         #This filters out sequencing errors, heteroduplexes
         read_seqs, read_phreds, read_names = read_fastq(path*tagSeq*".fastq");
         averages = mean([Array{Float64}(read_phreds[i][1:50]) for i in 1:length(read_phreds)])
+        umi_ix = findfirst(r"n+", template)
         p_val = 1
-        if mean(averages[1:8])<mean(averages[10:30])
+        if mean(averages[umi_ix])<mean(averages[umi_ix[end]+5:umi_ix[end]+25])
             p_val=pvalue(EqualVarianceTTest(averages[1:8],averages[10:30]))
         end
 
-        if p_val < 1/(5*tag_counts[tagSeq]^2) && minimum(averages[1:8]) < mean(averages[10:30])/2
+        if p_val < 1/(5*tag_counts[tagSeq]^2) && minimum(averages[umi_ix]) < mean(averages[umi_ix[end]+5:umi_ix[end]+25])/2
             push!(tags, "heteroduplex")
             continue
         end
