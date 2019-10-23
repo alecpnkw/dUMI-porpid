@@ -109,7 +109,7 @@ function filterCCSFamilies(most_likely_real_for_each_obs, path, index_to_tag, ta
         umi_ix = findfirst(r"n+", template)
         p_val = 1
         if mean(averages[umi_ix])<mean(averages[umi_ix[end]+5:umi_ix[end]+25])
-            p_val=pvalue(EqualVarianceTTest(averages[1:8],averages[10:30]))
+            p_val=pvalue(EqualVarianceTTest(averages[umi_ix],averages[umi_ix[end]+5:umi_ix[end]+25]))
         end
 
         if p_val < 1/(5*tag_counts[tagSeq]^2) && minimum(averages[umi_ix]) < mean(averages[umi_ix[end]+5:umi_ix[end]+25])/2
