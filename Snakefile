@@ -1,6 +1,7 @@
 from snakemake.remote.SFTP import RemoteProvider
-SFTP = RemoteProvider(username="appankow", private_key="/home/appankow/.ssh/id_rsa_themis")
-configfile: "config.yaml"
+#Need to configure remote before running
+SFTP = RemoteProvider(username="", private_key="")
+configfile: "config-test.yaml"
 paired = [(ds, config["datasets"][ds]["Run"]) for ds in config["datasets"]]
 datasets = [ds for (ds,run) in paired]
 runIDs = [run for (ds,run) in paired]
@@ -32,7 +33,9 @@ rule porpid:
         directory("tagged/{runID}/{dataset}.fastq/{dataset}"),
         directory("tagged/{runID}/{dataset}.fastq/{dataset}_keeping")
     params:
-        sUMI_primer = lambda wc: config["datasets"][wc.dataset]["sUMI_Primer_Sequence"]
+        sUMI_primer = lambda wc: config["datasets"][wc.dataset]["sUMI_Primer_Sequence"],
+        N7_Index = lambda wc: config["datasets"][wc.dataset]["N7_Index"],
+        S5_Index = lambda wc: config["datasets"][wc.dataset]["S5_Index"]
     script:
         "src/processing.jl"
 

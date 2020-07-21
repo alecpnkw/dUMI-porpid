@@ -75,7 +75,7 @@ for (template_name, template) in templates
     println("Processing $(template_name)")
     direc = template_name*".fastq"
     base_dir = "$(outdir)/"*direc*"/"*template_name*"_keeping"
-    @time seq_collection, seqname_collection = generateConsensusFromDir(base_dir, template_name)
+    @time seq_collection, seqname_collection = generateConsensusFromDir(base_dir, template_name, snakemake.params["N7_Index"], snakemake.params["S5_Index"])
     trimmed_collection = [primer_trim(s,sUMI_primer) for s in seq_collection];
     write_fasta(snakemake.output[1],
         reverse_complement.(trimmed_collection),

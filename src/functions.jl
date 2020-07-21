@@ -149,7 +149,7 @@ function filterCCSFamilies(most_likely_real_for_each_obs, path, index_to_tag, ta
     return tag_df
 end
 
-function generateConsensusFromDir(dir, template_name)
+function generateConsensusFromDir(dir, template_name, fwd_ix, rev_ix)
     files = [dir*"/"*f for f in readdir(dir) if f[end-5:end] == ".fastq"]
     if length(files) > 0
         println("Generating consensus for $(length(files)) templates")
@@ -159,11 +159,11 @@ function generateConsensusFromDir(dir, template_name)
     end
     cons_collection = pmap(ConsensusFromFastq, files)
     seq_collection = [i[1] for i in cons_collection]
-    seqname_collection = [template_name*i[2] for i in cons_collection]
+    seqname_collection = [template_name*i[2]*" Index=$(fwd_ix)_$(rev_ix)" for i in cons_collection]
     return seq_collection, seqname_collection
 end
 
-function generateConsensusFromDirSingleThread(dir, template_name)
+function generateConsensusFromDirSingleThread(dir, template_name, fwd_ix, rev_ix)
     files = [dir*"/"*f for f in readdir(dir) if f[end-5:end] == ".fastq"]
     if length(files) > 0
         println("Generating consensus for $(length(files)) templates")
@@ -173,7 +173,7 @@ function generateConsensusFromDirSingleThread(dir, template_name)
     end
     cons_collection = [ConsensusFromFastq(f) for f in files]
     seq_collection = [i[1] for i in cons_collection]
-    seqname_collection = [template_name*i[2] for i in cons_collection]
+    seqname_collection = [template_name*i[2]*" Index=$(fwd_ix)_$(rev_ix)" for i in cons_collection]
     return seq_collection, seqname_collection
 end
 
