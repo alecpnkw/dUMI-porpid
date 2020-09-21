@@ -13,6 +13,10 @@ println("Filtering .fastq file...")
                    max_length = snakemake.params["target_size"]*1.4)
 
 seqs, phreds, seq_names = read_fastq(filtered_path)
+need to reverse complement collections..
+get_phred_revc = x -> [p for p in x[end:-1:1]]
+seqs_revc = reverse_complement.(seqs)
+phreds_revc = get_phred_revc.(phreds)
 trimmed = [double_primer_trim(seqs[i],phreds[i],fwd_primer,rev_primer) for i in 1:length(seqs)]
 write_fastq(snakemake.output[1],
     [s for (s,p) in trimmed],
