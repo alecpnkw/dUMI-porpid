@@ -1,7 +1,7 @@
-from snakemake.remote.SFTP import RemoteProvider
+#from snakemake.remote.SFTP import RemoteProvider
 #Need to configure remote before running
-SFTP = RemoteProvider(username="", private_key="")
-configfile: "config-test.yaml"
+#SFTP = RemoteProvider(username="", private_key="")
+configfile: "2020-09_UW_M016.yaml"
 paired = [(ds, config["datasets"][ds]["Run"]) for ds in config["datasets"]]
 datasets = [ds for (ds,run) in paired]
 runIDs = [run for (ds,run) in paired]
@@ -13,13 +13,13 @@ rule all:
 
 rule trim_primers:
     input:
-        SFTP.remote("hercules/opt/shared/PacBio_PipelineData/{runID}/Analysis/Demultiplexing/IRF3/{dataset}.fastq")
+        "{dataset}.fastq"
     output:
         "trimmed/{runID}/{dataset}.fastq", #add temporary() flag
         temporary("tmp/{runID}{dataset}_filt.fastq")
     params:
-        fwd_primer = lambda wc: config["datasets"][wc.dataset]["Reverse_Primer_2ndRd_Sequence"],
-        rev_primer = lambda wc: config["datasets"][wc.dataset]["Forward_Primer_2ndRd_Sequence"],
+        rev_primer = lambda wc: config["datasets"][wc.dataset]["Reverse_Primer_2ndRd_Sequence"],
+        fwd_primer = lambda wc: config["datasets"][wc.dataset]["Forward_Primer_2ndRd_Sequence"],
         target_size = 2400
     script:
         "src/trim-primers.jl"
