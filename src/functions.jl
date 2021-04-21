@@ -139,8 +139,8 @@ function filterCCSFamilies(most_likely_real_for_each_obs, path, index_to_tag, ta
     end
 
     #sort!(likely_real, by=x->tag_counts[x[2]])
-        directory = "$(path[1:end-1])_keeping/"
-    mkdir(directory)
+    directory = "$(path[1:end-1])_keeping/"
+    #mkdir(directory)
 
     for tag_tuple in likely_real
         run(`cp $(path)$(tag_tuple[2]).fastq $(directory)$(tag_tuple[2])_$(length(tag_tuple[2]))_$(round(tag_tuple[1],digits = 5))_$(tag_counts[tag_tuple[2]]).fastq`)
@@ -149,21 +149,23 @@ function filterCCSFamilies(most_likely_real_for_each_obs, path, index_to_tag, ta
     return tag_df
 end
 
-function generateConsensusFromDir(dir, template_name, fwd_ix, rev_ix)
+function generateConsensusFromDir(dir, template_name)#, fwd_ix, rev_ix)
     files = [dir*"/"*f for f in readdir(dir) if f[end-5:end] == ".fastq"]
     if length(files) > 0
         println("Generating consensus for $(length(files)) templates")
     else
         println("WARNING: no template families for $(template_name)")
+        return [], []
         exit()
     end
     cons_collection = pmap(ConsensusFromFastq, files)
     seq_collection = [i[1] for i in cons_collection]
-    seqname_collection = [template_name*i[2]*" Index=$(fwd_ix)_$(rev_ix)" for i in cons_collection]
+    seqname_collection = [template_name*i[2] for i in cons_collection]
+    #seqname_collection = [template_name*i[2]*" Index=$(fwd_ix)_$(rev_ix)" for i in cons_collection]
     return seq_collection, seqname_collection
 end
 
-function generateConsensusFromDirSingleThread(dir, template_name, fwd_ix, rev_ix)
+function generateConsensusFromDirSingleThread(dir, template_name)#, fwd_ix, rev_ix)
     files = [dir*"/"*f for f in readdir(dir) if f[end-5:end] == ".fastq"]
     if length(files) > 0
         println("Generating consensus for $(length(files)) templates")
@@ -173,7 +175,8 @@ function generateConsensusFromDirSingleThread(dir, template_name, fwd_ix, rev_ix
     end
     cons_collection = [ConsensusFromFastq(f) for f in files]
     seq_collection = [i[1] for i in cons_collection]
-    seqname_collection = [template_name*i[2]*" Index=$(fwd_ix)_$(rev_ix)" for i in cons_collection]
+    seqname_collection = [template_name*i[2] for i in cons_collection]
+    #seqname_collection = [template_name*i[2]*" Index=$(fwd_ix)_$(rev_ix)" for i in cons_collection]
     return seq_collection, seqname_collection
 end
 
@@ -281,7 +284,7 @@ function join_UMIs_by_rname(dir_f, dir_r)
     fwd_df = DataFrame(UMI_1 = fwd_cols[1], name = fwd_cols[2], file = fwd_cols[3]);
     rev_df = DataFrame(UMI_2 = rev_cols[1], name = rev_cols[2]);
 
-    joined = join(fwd_df, rev_df, on = :name, kind=:inner)
+    joined = innerjoin(fwd_df, rev_df, on = :name)
 
     return joined
 end
@@ -291,34 +294,34 @@ Ranks UMI read families for dUMI processing
 """
 
 function get_ranked_families(joined)
+    if size(joined,1) == 0
+        @warn "No dUMI families!"
+        return DataFrame([String, String, Int, Int, Float64, String], [:UMI_1, :UMI_2, :fs, :rank, :prop, :names])
+    else
+        gdf = DataFrames.groupby(joined, [:UMI_1, :UMI_2]);
+        duplex_fs = combine(x-> DataFrame(fs = size(x)[1], names = join(x[:,:name],";")), gdf);
+        #duplex_fs = by(joined, [:UMI_1, :UMI_2], x-> DataFrame(fs = size(x)[1], names = join(x[:,:name],";")))
+        sort!(duplex_fs, :fs, rev=true)
 
-    duplex_fs = by(joined, [:UMI_1, :UMI_2], x-> DataFrame(fs = size(x)[1], names = join(x[:,:name],";")))
-    sort!(duplex_fs, :fs, rev=true)
-
-    # select largest family size for each tag_1 ID
-    ranked = by(duplex_fs, [:UMI_1], x->DataFrame(UMI_2 = x[:,:UMI_2],
-                                       fs=x[:,:fs],
-                                       rank=range(1; stop=length(x[:,:UMI_2])),
-                                       prop=x[:,:fs]/sum(x[:,:fs]),
-                                       names = x[:,:names]
-                                    ))
-    return ranked
+        # select largest family size for each tag_1 ID
+        ranked = by(duplex_fs, [:UMI_1], x->DataFrame(UMI_2 = x[:,:UMI_2],
+                                           fs=x[:,:fs],
+                                           rank=range(1; stop=length(x[:,:UMI_2])),
+                                           prop=x[:,:fs]/sum(x[:,:fs]),
+                                           names = x[:,:names]
+                                        ))
+        return ranked
+    end
 end
 
 """
 Write duplex output to new files
 """
 
-function write_duplex_output(dir, duplex_out, joined; outdir = "duplex_output")
+function write_duplex_output(dir, duplex_out, joined; outdir = ".")
 
     dir = strip(dir,'/')
     outdir = strip(outdir,'/')
-
-    sample = basename(dir)
-
-    if !isdir(outdir*"/"*sample*"_dUMI/")
-        mkdir(outdir*"/"*sample*"_dUMI/")
-    end
 
     for x in eachrow(duplex_out)
 
@@ -326,10 +329,10 @@ function write_duplex_output(dir, duplex_out, joined; outdir = "duplex_output")
         out_phreds = Array{Int8,1}[]
         out_names = []
 
-        fh = "$(x[!, :UMI_1])_$(x[!, :UMI_2])_$(x[!, :fs])_$(round(x[!, :prop]; digits=2)).fastq"
+        fh = "$(x[:UMI_1])_$(x[:UMI_2])_$(x[:fs])_$(round(x[:prop]; digits=2)).fastq"
 
-        UMI_1 = x[!, :UMI_1]
-        UMI_2 = x[!, :UMI_2]
+        UMI_1 = x[:UMI_1]
+        UMI_2 = x[:UMI_2]
 
         family = @linq joined |> where(:UMI_1 .== UMI_1, :UMI_2 .== UMI_2)
         seqs, phreds, names = read_fastq(dir*"/"*family[1,:file])
@@ -344,7 +347,7 @@ function write_duplex_output(dir, duplex_out, joined; outdir = "duplex_output")
             end
         end
 
-        write_fastq(outdir*"/"*sample*"_dUMI/"*fh, out_seqs, out_phreds; names = out_names)
+        write_fastq(outdir*"/"*fh, out_seqs, out_phreds; names = out_names)
     end
 end
 

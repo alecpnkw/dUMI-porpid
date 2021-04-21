@@ -29,11 +29,16 @@ rule porpid:
         "trimmed/{runID}/{dataset}.fastq"
     output:
         "consensus/{runID}/{dataset}.fasta",
-        "tagged/{runID}/{dataset}.fastq/family_tags.csv",
-        directory("tagged/{runID}/{dataset}.fastq/{dataset}"),
-        directory("tagged/{runID}/{dataset}.fastq/{dataset}_keeping")
+        "tagged/{runID}/{dataset}.fastq/UMI1_family_tags.csv",
+        directory("tagged/{runID}/{dataset}.fastq/UMI1/"),
+        directory("tagged/{runID}/{dataset}.fastq/UMI1_keeping/"),
+        directory("tagged/{runID}/{dataset}.fastq/UMI2/"),
+        directory("tagged/{runID}/{dataset}.fastq/dUMI/"),
+        "tagged/{runID}/{dataset}.fastq/dUMI_ranked.csv"
     params:
+        dir = "tagged/{runID}/",
         sUMI_primer = lambda wc: config["datasets"][wc.dataset]["sUMI_Primer_Sequence"],
+        dUMI_primer = lambda wc: config["datasets"][wc.dataset]["dUMI_Primer_Sequence"],
         N7_Index = lambda wc: config["datasets"][wc.dataset]["N7_Index"],
         S5_Index = lambda wc: config["datasets"][wc.dataset]["S5_Index"]
     script:
@@ -41,7 +46,7 @@ rule porpid:
 
 rule qc_bins:
     input:
-        "tagged/{runID}/{dataset}.fastq/family_tags.csv"
+        "tagged/{runID}/{dataset}.fastq/UMI1_family_tags.csv"
     output:
         report("postproc/{runID}/{dataset}/{dataset}_qc_bins.png", category = "PORPID QC"),
         report("postproc/{runID}/{dataset}/{dataset}_qc_bins.csv", category = "PORPID QC")
@@ -50,7 +55,7 @@ rule qc_bins:
 
 rule aggregate_tags:
     input:
-        expand("tagged/{runID}/{dataset}.fastq/family_tags.csv", zip, dataset = datasets, runID = runIDs)
+        expand("tagged/{runID}/{dataset}.fastq/UMI1_family_tags.csv", zip, dataset = datasets, runID = runIDs)
     output:
         "reports/template-report.html"
     script:
