@@ -1,5 +1,5 @@
-configfile: "2020-09_UW_M016.yaml"
-datasets = config["datasets"]
+configfile: "config.yaml"
+datasets = config
 
 rule all:
     input:

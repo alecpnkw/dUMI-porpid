@@ -1,4 +1,4 @@
-name: IRF3-porpid
+name: porpid
 dependencies:
   - snakemake-minimal
   - python =3.7
