@@ -106,7 +106,7 @@ println("Generating consensus...")
 t1 = time()
 println("Processing $(template_name)")
 base_dir = "$(snakemake.output[4])"
-@time seq_collection, seqname_collection = generateConsensusFromDir(base_dir, template_name)#, snakemake.params["N7_Index"], snakemake.params["S5_Index"])
+@time seq_collection, seqname_collection = generateConsensusFromDir(base_dir, template_name)
 trimmed_collection = [primer_trim(s,sUMI_primer) for s in seq_collection];
 write_fasta(snakemake.output[1],
     reverse_complement.(trimmed_collection),

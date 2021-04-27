@@ -1,61 +1,56 @@
-#from snakemake.remote.SFTP import RemoteProvider
-#Need to configure remote before running
-#SFTP = RemoteProvider(username="", private_key="")
 configfile: "2020-09_UW_M016.yaml"
-paired = [(ds, config["datasets"][ds]["Run"]) for ds in config["datasets"]]
-datasets = [ds for (ds,run) in paired]
-runIDs = [run for (ds,run) in paired]
+datasets = config["datasets"]
 
 rule all:
     input:
         "reports/template-report.html",
-        expand("postproc/{runID}/{dataset}/{dataset}_qc_bins.csv", zip, dataset = datasets, runID = runIDs)
+        expand("postproc/{dataset}/{dataset}_qc_bins.csv", dataset = datasets)
 
-rule trim_primers:
+rule filter_and_trim_primers:
     input:
-        "{dataset}.fastq"
+        "fastq/{dataset}.fastq"
     output:
-        "trimmed/{runID}/{dataset}.fastq", #add temporary() flag
-        temporary("tmp/{runID}{dataset}_filt.fastq")
+        "trimmed/{dataset}.fastq",
+        temporary("tmp/{dataset}_filt.fastq")
     params:
         rev_primer = lambda wc: config["datasets"][wc.dataset]["Reverse_Primer_2ndRd_Sequence"],
         fwd_primer = lambda wc: config["datasets"][wc.dataset]["Forward_Primer_2ndRd_Sequence"],
-        target_size = 2400
+        min_length = 1440,
+        max_length = 3360,
+        error_rate = 0.01
     script:
-        "src/trim-primers.jl"
+        "src/filter-trim-primers.jl"
 
 rule porpid:
     input:
-        "trimmed/{runID}/{dataset}.fastq"
+        "trimmed/{dataset}.fastq"
     output:
-        "consensus/{runID}/{dataset}.fasta",
-        "tagged/{runID}/{dataset}.fastq/UMI1_family_tags.csv",
-        directory("tagged/{runID}/{dataset}.fastq/UMI1/"),
-        directory("tagged/{runID}/{dataset}.fastq/UMI1_keeping/"),
-        directory("tagged/{runID}/{dataset}.fastq/UMI2/"),
-        directory("tagged/{runID}/{dataset}.fastq/dUMI/"),
-        "tagged/{runID}/{dataset}.fastq/dUMI_ranked.csv"
+        "consensus/{dataset}.fasta",
+        "tagged/{dataset}.fastq/UMI1_family_tags.csv",
+        directory("tagged/{dataset}.fastq/UMI1/"),
+        directory("tagged/{dataset}.fastq/UMI1_keeping/"),
+        directory("tagged/{dataset}.fastq/UMI2/"),
+        directory("tagged/{dataset}.fastq/dUMI/"),
+        "tagged/{dataset}.fastq/dUMI_ranked.csv"
     params:
-        dir = "tagged/{runID}/",
+        dir = "tagged/",
         sUMI_primer = lambda wc: config["datasets"][wc.dataset]["sUMI_Primer_Sequence"],
         dUMI_primer = lambda wc: config["datasets"][wc.dataset]["dUMI_Primer_Sequence"],
-        N7_Index = lambda wc: config["datasets"][wc.dataset]["N7_Index"],
-        S5_Index = lambda wc: config["datasets"][wc.dataset]["S5_Index"]
     script:
         "src/processing.jl"
 
 rule qc_bins:
     input:
-        "tagged/{runID}/{dataset}.fastq/UMI1_family_tags.csv"
+        "tagged/{dataset}.fastq/UMI1_family_tags.csv"
     output:
-        report("postproc/{runID}/{dataset}/{dataset}_qc_bins.png", category = "PORPID QC"),
-        report("postproc/{runID}/{dataset}/{dataset}_qc_bins.csv", category = "PORPID QC")
+        report("postproc/{dataset}/{dataset}_qc_bins.png", category = "PORPID QC"),
+        report("postproc/{dataset}/{dataset}_qc_bins.csv", category = "PORPID QC")
     script:
         "src/qc-bins-snakemake.jl"
 
-rule aggregate_tags:
+rule R_aggregate_tags:
     input:
-        expand("tagged/{runID}/{dataset}.fastq/UMI1_family_tags.csv", zip, dataset = datasets, runID = runIDs)
+        expand("tagged/{dataset}.fastq/UMI1_family_tags.csv", zip, dataset = datasets)
     output:
         "reports/template-report.html"
     script:

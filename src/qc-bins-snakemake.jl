@@ -3,7 +3,6 @@ using DataFrames, DataFramesMeta, Seaborn, CSV
 
 tag_df = CSV.read(snakemake.input[1])
 sample = snakemake.wildcards["dataset"]
-dataset = snakemake.wildcards["runID"]
 
 """
     family_size_umi_len_stripplot

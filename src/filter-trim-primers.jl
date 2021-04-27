@@ -8,9 +8,9 @@ filtered_path = snakemake.output[2] #julia temp paths don't work
 println("Filtering .fastq file...")
 @time fastq_filter(snakemake.input[1],
                    filtered_path, #path here
-                   error_rate = 0.01,
-                   min_length = snakemake.params["target_size"]*0.6,
-                   max_length = snakemake.params["target_size"]*1.4)
+                   error_rate = snakemake.params["error_rate"],
+                   min_length = snakemake.params["min_length"],
+                   max_length = snakemake.params["max_length"])
 
 seqs, phreds, seq_names = read_fastq(filtered_path)
 #need to reverse complement collections..
