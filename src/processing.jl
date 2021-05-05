@@ -3,14 +3,14 @@ include("../../src/functions.jl")
 
 sUMI_primer = snakemake.params["sUMI_primer"] #fill in here.
 dUMI_primer = snakemake.params["dUMI_primer"]
-filtered_data_file = snakemake.input[1]
-template_name = split(basename(filtered_data_file),'.')[1]
+filtered_data_file = snakemake.input[1]*"/"*snakemake.wildcards["template"]*".fastq"
+template_name = snakemake.wildcards["template"]
 
 ### Processing UMI 1 ###
 println("Extracting UMI 1...")
 t1 = time()
 templates1 = Dict()
-templates1["UMI1"] = replace(sUMI_primer, "N" => "n")*"*"
+templates1["UMI1"] = replace(uppercase(sUMI_primer), "N" => "n")*"*"
 
 cfg = Configuration()
 cfg.files = [filtered_data_file]
@@ -107,7 +107,7 @@ t1 = time()
 println("Processing $(template_name)")
 base_dir = "$(snakemake.output[4])"
 @time seq_collection, seqname_collection = generateConsensusFromDir(base_dir, template_name)
-trimmed_collection = [primer_trim(s,sUMI_primer) for s in seq_collection];
+trimmed_collection = [primer_trim(s,uppercase(sUMI_primer)) for s in seq_collection];
 write_fasta(snakemake.output[1],
     reverse_complement.(trimmed_collection),
     names = seqname_collection)
