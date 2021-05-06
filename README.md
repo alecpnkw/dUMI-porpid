@@ -5,11 +5,12 @@
 For this project, libraries are expected to contain a forward (sUMI) and reverse (dUMI) UMI primer. The config file is expected to follow this formatting scheme:
 
 ```
-<template_name>:
-  Forward_Primer_2ndRd_Sequence: <fwd_primer_to_trim>
-  Reverse_Primer_2ndRd_Sequence: <rev_primer_to_trim>
-  sUMI_Primer_Sequence: <sUMI_primer>
-  dUMI_Primer_Sequence: <dUMI_primer>
+dataset001:
+  template001:
+    Forward_Primer_2ndRd_Sequence: AGATGTGTATAAGAGACAGCCTCCGGTTGCAGGTAAGTGC
+    Reverse_Primer_2ndRd_Sequence: AGATGTGTATAAGAGACAGCCGCTCCGTCCGACGACTC
+    sUMI_Primer_Sequence: actataNNNNNNNNTTAGAGACATCCCCAGAGCTGTTAG
+    dUMI_Primer_Sequence: NNNNNNNNATAGCTGTCTTTTATC
 ```
 
 The file `config.yaml` contains an example. The supplied primer sequences are trimmed before UMI calling.
