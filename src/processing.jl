@@ -107,7 +107,7 @@ t1 = time()
 println("Processing $(template_name)")
 base_dir = "$(snakemake.output[4])"
 @time seq_collection, seqname_collection = generateConsensusFromDir(base_dir, template_name)
-trimmed_collection = [primer_trim(s,uppercase(sUMI_primer)) for s in seq_collection];
+trimmed_collection = [double_primer_trim(s,uppercase(sUMI_primer), uppercase(dUMI_primer)) for s in seq_collection];
 write_fasta(snakemake.output[1],
     reverse_complement.(trimmed_collection),
     names = seqname_collection)
