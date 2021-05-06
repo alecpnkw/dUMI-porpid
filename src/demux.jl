@@ -120,8 +120,8 @@ rev_adapter = String(split(rev_adapter,r"[a-z]")[1]) #if all contain sample ID k
 #sliding window demultiplex on forward primers
 fwd_demux_dic = sliding_demux_dict(seqs,
                                    unique_fwd_ends,
-                                   30,
-                                   5, #must not extend into the sampleID
+                                   12,
+                                   6, #must not extend into the sampleID
                                    verbose=false,
                                    phreds = phreds)
 #iterate by each forward primer group
@@ -140,7 +140,7 @@ for j in unique(fwd_end_group_arr)
     println("$(length(seqs_fwd)) reads matching forward primer $(unique_fwd_ends[j])")
 
     #match to reverse adapter
-    rev_matches = iterative_primer_match(seqs_fwd, [rev_adapter], 30, 5, tol_one_error=true);
+    rev_matches = iterative_primer_match(seqs_fwd, [rev_adapter], 12, 6, tol_one_error=true);
     rev_keepers = rev_matches .< 0
 
     #filter to reverse adapter matches
